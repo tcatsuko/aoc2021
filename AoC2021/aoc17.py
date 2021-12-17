@@ -48,58 +48,85 @@ for starting_x in range(x_max + 1):
             break
         if x_vel == 0:
             if starting_x in good_x:
-                good_x[starting_x] += [999999999999999999999999]
+                good_x[starting_x] += [99999]
     starting_x += 1 
 
 # Now we have good X values, time to use that to find good Y values
-for x in good_x:
-    valid_steps = good_x[x]
-    overshoot = False
-    min_step = min(valid_steps)
-    max_step = max(valid_steps)
-    y_min = target_bounds[1][0]
-    y_max = target_bounds[1][1]    
-    starting_y = y_min #based on rules, this is the 'lowest' velocity you can have and make it in the Y target range
-    temp1 = 0
-    for counter in range(y_min, 3*(abs(y_max))):
-        in_target = False
-        y_vel = starting_y
+#for x in good_x:
+    #valid_steps = good_x[x]
+    #overshoot = False
+    #min_step = min(valid_steps)
+    #max_step = max(valid_steps)
+    #y_min = target_bounds[1][0]
+    #y_max = target_bounds[1][1]    
+    #starting_y = y_min #based on rules, this is the 'lowest' velocity you can have and make it in the Y target range
+    #temp1 = 0
+    #for counter in range(y_min, 3*(abs(y_max))):
+        #in_target = False
+        #y_vel = starting_y
 
-        steps = 0
-        y_pos = 0
-        if (starting_y > (5*abs(y_min))):
-            overshoot = True
-            continue
-        if max_step != 999999999999999999999999:
-            while steps <= max_step:
-                steps += 1
-                y_pos += y_vel
-                y_vel -= 1
-                if (y_pos >= y_min) and (y_pos <= y_max) and steps >= min_step:
-                    in_target = True
-                    if (x, starting_y) not in good_y:
-                        good_y[(x, starting_y)] = [steps]
-                    else:
-                        good_y[(x, starting_y)] += [steps]
-        else:
-            while y_pos > y_min:
-                steps += 1
-                y_pos += y_vel
-                y_vel -= 1
-                if (y_pos >= y_min) and (y_pos <= y_max) and steps >= min_step:
-                    in_target = True
-                    if (x, starting_y) not in good_y:
-                        good_y[(x, starting_y)] = [steps]
-                    else:
-                        good_y[(x, starting_y)] += [steps] 
+        #steps = 0
+        #y_pos = 0
+        #if (starting_y > (5*abs(y_min))):
+            #overshoot = True
+            #continue
+        #if max_step != 999999999999999999999999:
+            #while steps <= max_step:
+                #steps += 1
+                #y_pos += y_vel
+                #y_vel -= 1
+                #if (y_pos >= y_min) and (y_pos <= y_max) and steps >= min_step:
+                    #in_target = True
+                    #if (x, starting_y) not in good_y:
+                        #good_y[(x, starting_y)] = [steps]
+                    #else:
+                        #good_y[(x, starting_y)] += [steps]
+        #else:
+            #while y_pos > y_min:
+                #steps += 1
+                #y_pos += y_vel
+                #y_vel -= 1
+                #if (y_pos >= y_min) and (y_pos <= y_max) and steps >= min_step:
+                    #in_target = True
+                    #if (x, starting_y) not in good_y:
+                        #good_y[(x, starting_y)] = [steps]
+                    #else:
+                        #good_y[(x, starting_y)] += [steps] 
 
-        starting_y += 1
+        #starting_y += 1
 
+# Find good y
+y_min = target_bounds[1][0]
+y_max = target_bounds[1][1]   
+for y_initial in range(y_min, 3 * abs(y_min)):
+    steps = 0
+    y_vel = y_initial
+    y_pos = 0
+    while y_pos > y_min:
+        steps += 1
+        y_pos += y_vel
+        y_vel -= 1
+        if (y_pos < y_max) and (y_pos > y_min):
+            if y_initial not in good_y:
+                good_y[y_initial] = [steps]
+            else:
+                good_y[y_initial] += [steps]
+good_points = {}
+for y_coord in good_y:
+    good_steps = good_y[y_coord]
+    for y_step in good_steps:
+        for x_coord in good_x:
+            min_step = min(good_x[x_coord])
+            max_step = max(good_x[x_coord])
+            
+            if y_step in range(min_step, max_step + 1):
+                good_points[(x_coord, y_coord)] = 1
+print()
 # Now that we have found good velocities, get the highest initial Y velocity
 # Determine if we have any times that x falls to 0
 calculation = False
 for item in good_x:
-    if 999999999999999999999999 in good_x[item]:
+    if 99999 in good_x[item]:
         calculation = True
 if calculation == True:
     # velocity needs to be the same as y_min at 0, so start from there
