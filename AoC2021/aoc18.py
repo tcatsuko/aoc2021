@@ -21,8 +21,6 @@ def create_snail(my_input):
             level += [current_level]
     return (value, level)
 
-
-
 def explode(snail_number):
     value = snail_number[0][:]
     level = snail_number[1][:]
@@ -54,8 +52,6 @@ def explode(snail_number):
     level[max_index] -= 1
     del value[max_index + 1]
     del level[max_index + 1]
-
-    
     return(value, level)
 
 def add_snail(snail1, snail2):
@@ -81,8 +77,7 @@ def split(snail_number):
     if int(value[counter]) % 2 == 0:
         right_value = int(value[counter]/2)
     else:
-        right_value = int(value[counter]/2)+1
-        
+        right_value = int(value[counter]/2)+1       
     value[counter] = left_value
     level[counter] += 1
     value.insert(counter + 1, right_value)
@@ -93,12 +88,8 @@ def calculate_magnitude(snail_number):
     value = snail_number[0][:]
     level = snail_number[1][:]
     while len(value) > 1:
-        # Find max level
         max_level = max(level)
         max_index = level.index(max_level)
-        # Check that the next number is also the same
-        if level[max_index + 1] != level[max_index]:
-            print()
         left_mag = 3*value[max_index]
         right_mag = 2*value[max_index + 1]
         magnitude = left_mag + right_mag
@@ -108,43 +99,30 @@ def calculate_magnitude(snail_number):
         del level[max_index + 1]
     return value[0]
 
-snail_number = create_snail(raw_input[0])
-f = open('test2_aoc18.txt','rt')
-raw_2 = []
-for line in f:
-    raw_2 += [line[:-1]]
-f.close()
-check_snails = []
-
-
 def reduce_snail(snail_number):
     reduced_number = True
-
     current_index = 0
     while reduced_number == True:
         check1 = snail_number
-
         reduced_number = False
         while True:
             check1 = snail_number
-
             new_snail = explode(snail_number)
             if new_snail[0] == snail_number[0]:
                 break
             reduced_number = True
             snail_number = new_snail
             current_index += 1
-
         new_snail = split(snail_number)
         if new_snail[0] != snail_number[0]:
             current_index += 1
             reduced_number = True
-
         snail_number = new_snail
         check1 = snail_number
     return snail_number
+
     
-    
+snail_number = create_snail(raw_input[0])    
 for snail_text in raw_input[1:]:
     next_number = create_snail(snail_text)
     snail_number = add_snail(snail_number, next_number)
