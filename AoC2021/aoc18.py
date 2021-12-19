@@ -1,4 +1,5 @@
 import itertools
+import math
 f = open('aoc18.txt','rt')
 raw_input = []
 for line in f:
@@ -73,11 +74,8 @@ def split(snail_number):
         counter += 1
     if high_index == -1:
         return(value, level)
-    left_value = int(value[counter]/2)
-    if int(value[counter]) % 2 == 0:
-        right_value = int(value[counter]/2)
-    else:
-        right_value = int(value[counter]/2)+1       
+    left_value = math.floor(value[counter]/2)   
+    right_value = math.ceil(value[counter]/2)
     value[counter] = left_value
     level[counter] += 1
     value.insert(counter + 1, right_value)
