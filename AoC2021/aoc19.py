@@ -1,5 +1,5 @@
 import math
-f = open('test_aoc19.txt','rt')
+f = open('aoc19.txt','rt')
 raw_input = []
 for line in f:
     raw_input += [line[:-1]]
@@ -56,11 +56,13 @@ for scanner in scanners_raw:
     for idx, beacon in enumerate(scanner):
         other_beacons = scanner[:]
         other_beacons.remove(beacon)
-        fingerprints = set()
+        fingerprints = []
+        offsets = []
         for other_beacon in other_beacons:
             current_fingerprint = get_fingerprint(beacon[0], other_beacon[0])
-            fingerprints.add((current_fingerprint[0:3]))
-        scanner[idx] = (beacon[0], fingerprints, current_fingerprint[3])
+            fingerprints += [current_fingerprint[0:3]]
+            offsets += [current_fingerprint[3]]
+        scanner[idx] = (beacon[0], fingerprints, offsets)
 
 # Start to match points
 found_scanners = []
@@ -138,31 +140,42 @@ def translate_and_add(scanner_orig, beacon_pair, x_trans, y_trans, z_trans):
     good_fingerprint = beacon_pair[0][1]
     reference_pos = beacon_pair[0][0]
     for beacon in scanner_orig:
+        calculate_offset = False
         beacon_pos = beacon[0]
         beacon_fingerprint = beacon[1]
         beacon_offset = beacon[2]
         new_beacon_pos = []
         new_beacon_offset = []
-        new_beacon_offset += [beacon_offset[x_trans[0]] * x_trans[1]]
-        new_beacon_offset += [beacon_offset[y_trans[0]] * y_trans[1]]
-        new_beacon_offset += [beacon_offset[z_trans[0]] * z_trans[1]]        
+        good_pair_pos = (beacon_pair[1][0][0], beacon_pair[1][0][1], beacon_pair[1][0][2])
+        current_beacon_pos = (beacon[0][0], beacon[0][1], beacon[0][2])
+        if good_pair_pos == current_beacon_pos:
+            calculate_offset = True
+        for item in beacon_offset:
+            new_offset_x = item[x_trans[0]] * x_trans[1]
+            new_offset_y = item[y_trans[0]] * y_trans[1]
+            new_offset_z = item[z_trans[0]] * z_trans[1]
+            new_beacon_offset += [(new_offset_x, new_offset_y, new_offset_z)]
+    
         new_beacon_pos += [beacon_pos[x_trans[0]] * x_trans[1]]
         new_beacon_pos += [beacon_pos[y_trans[0]] * y_trans[1]]
         new_beacon_pos += [beacon_pos[z_trans[0]] * z_trans[1]]
-        if beacon_pos == beacon_pair[1][0]:
-            offset_pos = new_beacon_pos
-        print()
+        new_beacon_pos = (new_beacon_pos[0], new_beacon_pos[1], new_beacon_pos[2])
+        if calculate_offset == True:
+            good_position = beacon_pair[0][0]
+            offset_x = good_position[0] - new_beacon_pos[0]
+            offset_y = good_position[1] - new_beacon_pos[1]
+            offset_z = good_position[2] - new_beacon_pos[2]
+
         translated_scanner += [[new_beacon_pos, beacon_fingerprint, new_beacon_offset]]
-    offset_x = reference_pos[0]-offset_pos[0]
-    offset_y = reference_pos[1] - offset_pos[1]
-    offset_z = reference_pos[2] - offset_pos[2]
+
+    # Get offset
+    matched_beacon_pos_old = beacon_pair[1][1]
+    
     for counter in range(len(translated_scanner)):
-        translated_scanner[counter][0][0] += offset_x
-        translated_scanner[counter][0][1] += offset_y
-        translated_scanner[counter][0][2] += offset_z
+
+        translated_scanner[counter][0] = (translated_scanner[counter][0][0] + offset_x, translated_scanner[counter][0][1] + offset_y, translated_scanner[counter][0][2] + offset_z)
         beacon_tuple = (translated_scanner[counter][0][0], translated_scanner[counter][0][1], translated_scanner[counter][0][2])
         beacon_positions.add(beacon_tuple)
-    print()
     scanner_positions += [(offset_x, offset_y, offset_z)]
     found_scanners += [translated_scanner]
     scanners_raw.remove(scanner_orig)
@@ -185,25 +198,41 @@ while scanners_raw != []:
                         break
                     for other_beacon in scanner:
                         #if beacon[1] == other_beacon[1]:
-                        test1 = beacon[1].intersection(other_beacon[1])
-                        if len(beacon[1].intersection(other_beacon[1]))>= 4:
+                        test1 = set(beacon[1]).intersection(set(other_beacon[1]))
+                        if len(set(beacon[1]).intersection(set(other_beacon[1])))>= 4:
                             matched_points += [(other_beacon[0], beacon[0])]
                             matched_beacons += [(other_beacon, beacon)]
                         if len(matched_points) >= 5:
-                            print('Good Overlap')
                             # Found a match!
                             # will need to rotate later, for now just move them up
                             # Get the offset matrix
                             
                             found_rotation = False
+                            found_good_match = False
                             for pair in matched_beacons:
-                                reference_offset = pair[0][2]
-                                coordinate = pair[1][2]
-                                if (abs(reference_offset[0]) == abs(reference_offset[1])) or (abs(reference_offset[0]) == abs(reference_offset[2])) or (abs(reference_offset[1]) == abs(reference_offset[2])):
-                                    continue
-                                if (reference_offset[0] == 0) or (reference_offset[1] == 0) or (reference_offset[2] == 0):
-                                    continue
-                                # Find x transformation
+                                # Find a fingerprint that is the same
+                                known_beacon = pair[0]
+                                unknown_beacon = pair[1]
+                                if found_good_match == True:
+                                    break
+                                for idx, fingerprint in enumerate(known_beacon[1]):
+                                    if found_good_match == True:
+                                        break
+                                    if fingerprint in unknown_beacon[1]:
+                                        unknown_index = unknown_beacon[1].index(fingerprint)
+                                        reference_offset = unknown_beacon[2][unknown_index]
+                                        if (abs(reference_offset[0]) == abs(reference_offset[1])) or (abs(reference_offset[0]) == abs(reference_offset[2])) or (abs(reference_offset[1]) == abs(reference_offset[2])):
+                                            continue
+                                        if (reference_offset[0] == 0) or (reference_offset[1] == 0) or (reference_offset[2] == 0):
+                                            continue
+                                        good_offset = reference_offset
+                                        coordinate = known_beacon[2][idx]
+                                        found_good_match = True
+
+                                reference_offset = good_offset
+                                
+
+                                reference_offset = good_offset
                                 found_rotation = True
                                 good_x = reference_offset[0]
                                 good_y = reference_offset[1]
@@ -250,382 +279,26 @@ while scanners_raw != []:
                             translate_and_add(current_unmatched, matched_beacons[0], x_trans, y_trans, z_trans)
                            
                             match_scanner = True
-                            # Check first orientation (1)
-                            #if check_offsets(matched_points[:3]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 0)
-                                #add_to_found(matched_points, current_unmatched_rotated, current_unmatched)
-                                #print('Matched original orientation')
-                                #match_scanner = True
-                                #break
-                            ## Rotate 90 around x (2)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90')
-                                #match_scanner = True
-                                #break
-                            ## Rotate 90 around y (3)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'y', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched y 90')
-                                #match_scanner = True
-                                #break
-                            ## Rotate 90 around z (4)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'z', 90)
-                            #point_2 = rotate(point_2, 'z', 90)
-                            #point_3 = rotate(point_3, 'z', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'z', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched z 90')
-                                #match_scanner = True
-                                #break                            
-                            ## XX (5)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 180')
-                                #match_scanner = True
-                                #break
-                            ## XY (6)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, y 90')
-                                #match_scanner = True
-                                #break                                 
-                            ## XZ (7))
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'z', 90)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'z', 90)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'z', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'z', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, z 90')
-                                #match_scanner = True
-                                #break     
-                            ## yx (8)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'y', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'x', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched y 90, x 90')
-                                #match_scanner = True
-                                #break  
-                            ## YY (9)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'y', 180)
-                            #point_2 = rotate(point_2, 'y', 180)
-                            #point_3 = rotate(point_3, 'y', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'y', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched y 180')
-                                #match_scanner = True
-                                #break   
-                            ## ZY (10)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'z', 90)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_2 = rotate(point_2, 'z', 90)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_3 = rotate(point_3, 'z', 90)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'z', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched z 90, y 90')
-                                #match_scanner = True
-                                #break   
-                            ## ZZ (11)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'z', 180)
-                            #point_2 = rotate(point_2, 'z', 180)
-                            #point_3 = rotate(point_3, 'z', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'z', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched z 180')
-                                #match_scanner = True
-                                #break 
-                            ## XXX (2)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 270)
-                            #point_2 = rotate(point_2, 'x', 270)
-                            #point_3 = rotate(point_3, 'x', 270)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 270)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 270')
-                                #match_scanner = True
-                                #break     
-                            ## XXY (13)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 180)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 180, y 90')
-                                #match_scanner = True
-                                #break      
-                            ## XXZ (14)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_1 = rotate(point_1, 'z', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_2 = rotate(point_2, 'z', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #point_3 = rotate(point_3, 'z', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 180)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'z', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 180, z 90')
-                                #match_scanner = True
-                                #break 
-                            ## ZXX (15)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'z', 90)
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_2 = rotate(point_2, 'z', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_3 = rotate(point_3, 'z', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'z', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'x', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched z 90, x 180')
-                                #match_scanner = True
-                                #break   
-                            ## XYY (16)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'y', 180)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'y', 180)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'y', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, y 180')
-                                #match_scanner = True
-                                #break   
-                            ## XZZ (17)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'z', 180)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'z', 180)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'z', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'z', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, z 180')
-                                #match_scanner = True
-                                #break      
-                            ## YXX (18)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'y', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'x', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched y 90, x 180')
-                                #match_scanner = True
-                                #break     
-                            ## YYY (19)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'y', 270)
-                            #point_2 = rotate(point_2, 'y', 270)
-                            #point_3 = rotate(point_3, 'y', 270)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'y', 270)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched y 270')
-                                #match_scanner = True
-                                #break 
-                            ## ZZZ (20)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'z', 270)
-                            #point_2 = rotate(point_2, 'z', 270)
-                            #point_3 = rotate(point_3, 'z', 270)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'z', 270)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched z 270')
-                                #match_scanner = True
-                                #break  
-                            ## XXXY (21)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 270)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 270)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 270)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 270)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 270, y 90')
-                                #match_scanner = True
-                                #break    
-                            ## XXYX (22)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 180)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'x', 90)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 180, y 90, x 90')
-                                #match_scanner = True
-                                #break  
-                            ## XYXX (23)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'y', 90)
-                            #point_1 = rotate(point_1, 'x', 180)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'y', 90)
-                            #point_2 = rotate(point_2, 'x', 180)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'y', 90)
-                            #point_3 = rotate(point_3, 'x', 180)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'x', 180)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, y 90, x 180')
-                                #match_scanner = True
-                                #break  
-                            ## XYYY (24)
-                            #point_1 = matched_points[0][1]
-                            #point_2 = matched_points[1][1]
-                            #point_3 = matched_points[2][1]
-                            #point_1 = rotate(point_1, 'x', 90)
-                            #point_1 = rotate(point_1, 'y', 270)
-                            #point_2 = rotate(point_2, 'x', 90)
-                            #point_2 = rotate(point_2, 'y', 270)
-                            #point_3 = rotate(point_3, 'x', 90)
-                            #point_3 = rotate(point_3, 'y', 270)
-                            #if check_offsets([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]]):
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched, 'x', 90)
-                                #current_unmatched_rotated = rotate_scanner(current_unmatched_rotated, 'y', 270)
-                                #add_to_found([[matched_points[0][0], point_1],[matched_points[1][0],point_2],[matched_points[2][0],point_3]], current_unmatched_rotated, current_unmatched)
-                                #print('Matched x 90, y 270')
-                                #match_scanner = True
-                                #break                                
+                            
                             if current_unmatched in scanners_raw:
-                                test1 = 0
-                                #print('Failed to find orientation somehow')
+                                #test1 = 0
+                                print('Failed to find orientation somehow')
                         if match_scanner == True:
                             break
             idx += 1
 print('Part 1: there are ' + str(len(beacon_positions)) + ' beacons')
 
-        
+# Part 2
+# Glad I was already saving the location of scanners
+max_manhattan = 0
+for idx, scanner in enumerate(scanner_positions):
+    if idx == len(scanner_positions) - 1:
+        continue
+    current_scanner = scanner_positions[idx]
+    remaining_scanners = scanner_positions[idx + 1:]
+    for other_scanner in remaining_scanners:
+        manhattan = abs(current_scanner[0] - other_scanner[0]) + abs(current_scanner[1] - other_scanner[1]) + abs(current_scanner[2] - other_scanner[2])
+        if manhattan > max_manhattan:
+            max_manhattan = manhattan
+print('Part 2: the largest manhattan distance between any two scanners is ' + str(max_manhattan))
+   
