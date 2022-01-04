@@ -1,0 +1,280 @@
+inp w // w = w1
+mul x 0 // x = 0
+add x z // z = 0
+mod x 26 // x = 0
+div z 1 // z = 0
+add x 13 // x = 13
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 0
+mul y 0 // y = 0
+add y w // y = w1
+add y 5 y // w1 + 5
+mul y x y // w1 + 5
+add z y // z = w1 + 5
+
+inp w // w = w2
+mul x 0 // x = 0
+add x z // x = w1 + 5
+mod x 26 // x = w1 + 5
+div z 1 // z = w1 + 5
+add x 15 // x = w1 + 20
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 26*(w1 + 5)
+mul y 0 // y = 0
+add y w // y = w2
+add y 14 // y = w2 + 14
+mul y x // y = w2 * 14
+add z y // z = 26*(w1 + 5) + w2 + 14
+
+inp w // w = w3
+mul x 0 // x = 0
+add x z // x = 26*(w1 + 5) + w2 + 14
+mod x 26 // x = w2 + 14
+div z 1 // z = 26*(w1 + 5) + w2 + 14
+add x 15 // x = w2 + 29
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 26*26*(w1 + 5) + 26*(w2 + 14)
+mul y 0 // y = 0
+add y w // y = w3
+add y 15 // y = w3 + 15
+mul y x // y = w3 + 15
+add z y // z = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+
+inp w // w = w4
+mul x 0 // x = 0
+add x z // x = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+mod x 26 // x = w3 + 15
+div z 1 // z = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+add x 11 // x = w3 + 26
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 26*26*26*(w1 + 5) + 26*26*(w2 + 14) + 26*(w3 + 15)
+mul y 0 // y = 0
+add y w // y = w4
+add y 16 // y = w4 + 16
+mul y x // y = w4 + 16
+add z y // z = 26*26*26*(w1 + 5) + 26*26*(w2 + 14) + 26*(w3 + 15) + w4 + 16
+
+inp w // w = w5
+mul x 0 // x = 0
+add x z // x = 26*26*26*(w1 + 5) + 26*26*(w2 + 14) + 26*(w3 + 15) + w4 + 16
+mod x 26 // x = w4 + 16
+div z 26 // z = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+add x -16 // x = w4
+eql x w // x = 1 if w4 = w5  ##########################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1
+mul z y // z = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+mul y 0 // y = 0
+add y w // y = w5
+add y 8 // y = w5 + 8
+mul y x // y = 0
+add z y // z = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+
+** w4 = w5 **
+inp w // w = w6
+mul x 0 // x = 0
+add x z // x = 26*26*(w1 + 5) + 26*(w2 + 14) + w3 + 15
+mod x 26 // x = w3 + 15
+div z 26 // z = 26*(w1 + 5) + w2 + 14
+add x -11 // x = w3 + 4
+eql x w // x = 1 if w6 = w3 + 4  #############################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1
+mul z y // z = 26*(w1 + 5) + w2 + 14
+mul y 0 // y = 0
+add y w // y = w6
+add y 9 // y = w6 + 9
+mul y x // y = 0
+add z y // z = 26*(w1 + 5) + w2 + 14
+
+** w4 = w5, w3 = w6 - 4 **
+inp w // w = w7
+mul x 0 // x = 0
+add x z // x = 26*(w1 + 5) + w2 + 14
+mod x 26 // x = w2 + 14
+div z 26 // z = w1 + 5
+add x -6 // x = w2 + 8
+eql x w // x = 1 if w7 = w2 + 8  ################################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1 
+mul z y // z = w1 + 5
+mul y 0 // y = 0
+add y w // y = w7
+add y 2 // y = w7 + 2
+mul y x // y = 0
+add z y // z = w1 + 5
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9 **
+inp w // w = w8
+mul x 0 // x = 0
+add x z // x = w1 + 5
+mod x 26 // x = w1 + 5
+div z 1 // z = w1 + 5
+add x 11 // x = w1 + 16
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 26*(w1 + 5)
+mul y 0 // y = 0
+add y w // y = w8
+add y 13 // y = w8 + 13
+mul y x // y = w8 + 13
+add z y // z = 26*(w1 + 5) + w8 + 13
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9 **
+inp w // w = w9
+mul x 0 // x = 0
+add x z // x = 26*(w1 + 5) + w8 + 13
+mod x 26 // x = w8 + 13
+div z 1 // z = 26*(w1 + 5) + w8 + 13
+add x 10 // x = w8 + 23
+eql x w // x = 0
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 25
+add y 1 // y = 26
+mul z y // z = 26*26*(w1 + 5) + 26*(w8 + 13)
+mul y 0 // y = 0
+add y w // y = w9
+add y 16 // y = w9 + 16
+mul y x // y = w9 + 16
+add z y // z = 26*26*(w1 + 5) + 26*(w8 + 13) + w9 + 16
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9 **
+inp w // w = w10
+mul x 0 // x = 0
+add x z // x = 26*26*(w1 + 5) + 26*(w8 + 13) + w9 + 16
+mod x 26 // x = w9 + 16
+div z 26 // z = 26*(w1 + 5) + w8 + 13
+add x -10 // x = w9 + 6
+eql x w // x = 1 if w9 + 6 = w10  #################################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0 
+add y 1 // y = 1
+mul z y // z = 26*(w1 + 5) + w8 + 13
+mul y 0 // y = 0
+add y w // y = w10
+add y 6 // y = w10 + 6
+mul y x // y = 0
+add z y // z = 26*(w1 + 5) + w8 + 13
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9, w9 = w10 - 6 **
+inp w // w = w11
+mul x 0 // x = 0
+add x z // x = 26*(w1 + 5) + w8 + 13
+mod x 26 // x = w8 + 13
+div z 26 // z = w1 + 5
+add x -8 // x = w8 + 5
+eql x w // x = 1 if w11 = w8 + 5 ############################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1
+mul z y // z = w1 + 5
+mul y 0 // y = 0
+add y w // y = w11
+add y 6 // y = w11 + 6
+mul y x // y = 0
+add z y // z = w1 + 5
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9, w9 = w10 - 6, w8 = w11 - 5 **
+inp w // w = w12
+mul x 0 // x = 0
+add x z // x = w1 + 5
+mod x 26 // x = w1 + 5
+div z 26 // z = 0
+add x -11 // x = w1 - 6
+eql x w // x = 1 if w12 = w1 - 6  ##################################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1
+mul z y // z = 0
+mul y 0 // y = 0
+add y w // y = w12
+add y 9 // y = w12 + 9
+mul y x // y = 0
+add z y // z = 0
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9, w9 = w10 - 6, w8 = w11 - 5, w12 = w1 - 6 **
+inp w // w = w13
+mul x 0 // x = 0
+add x z // x = 0
+mod x 26 // x = 0
+div z 1 // z = 0
+add x 12 // x = 12
+eql x w // x = 0 
+eql x 0 // x = 1
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 35
+add y 1 // y = 26
+mul z y // z = 0
+mul y 0 // y = 0
+add y w // y = w13
+add y 11 // y = w13 + 11
+mul y x // y = w13 + 11
+add z y // z = w13 + 11
+
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9, w9 = w10 - 6, w8 = w11 - 5, w12 = w1 - 6 **
+inp w // w = w14
+mul x 0 // x = 0
+add x z // x = w13 + 11
+mod x 26 // x = w13 + 11
+div z 26 // z = 0
+add x -15 // x = w13 - 4
+eql x w // x = 1 if w14 = w13 - 4  ###############################################
+eql x 0 // x = 0
+mul y 0 // y = 0
+add y 25 // y = 25
+mul y x // y = 0
+add y 1 // y = 1
+mul z y // z = 0
+mul y 0 // y = 0
+add y w // y = w14
+add y 5 // y = w14 + 5
+mul y x // y = 0
+add z y // z = 0
+
+Final Constraints:
+** w4 = w5, w3 = w6 - 4, w2 = 1, w7 = 9, w9 = w10 - 6, w8 = w11 - 5, w12 = w1 - 6, w14 = w13 - 4 **
+
+Max number: 91599994399395
+Min number: 71111591176151
